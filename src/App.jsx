@@ -36,7 +36,6 @@ function App() {
     <div className="App">
       <header className="App-header">
       </header>
-      {/* <img src="src/assets/images/action/action_production_2023_MJ___01.webp" alt="action_back_image" /> */}
       <main>
         <ShuffleComponent
           attributeFrontImages={attributeFrontImages}

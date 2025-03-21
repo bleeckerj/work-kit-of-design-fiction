@@ -109,3 +109,52 @@ button {
     background-color: #0f0f0f69;
   }
 }
+
+.diagnostics {
+  flex: 1 1 auto;
+  height: 300px; /* Fixed height - adjust as needed */
+  max-height: 300px; /* Ensure it doesn't grow beyond this height */
+  min-height: 10em;
+  z-index: 1;
+  overflow-y: auto; /* Enable vertical scrolling */
+  overscroll-behavior: none; /* Prevents bouncing */
+  scroll-behavior: smooth; /* Makes programmatic scrolling smooth */
+  padding: 1rem; /* Optional: adds some internal spacing */
+}
+
+.diagnostics .ProseMirror {
+  text-align: left;
+  @apply font-bold;
+}
+
+/* Target paragraphs inside TipTap */
+.diagnostics .ProseMirror p {
+  text-align: left;
+  margin-bottom: 1em;
+}
+
+.diagnostics-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  position: relative;
+  overscroll-behavior: none; /* Completely prevents bouncing */
+  scroll-behavior: smooth; /* Optional: makes programmatic scrolling smooth */
+}
+
+.diagnostics-scroll-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-height: 300px; /* Match the diagnostics height */
+  border-radius: 0.25rem;
+  overflow-y: auto; /* Enable vertical scrolling */
+  @apply bg-transparent;
+  overscroll-behavior: none;
+
+  :focus {
+    outline: none;
+  }
+  transition: flex-basis 0.2s ease;
+}

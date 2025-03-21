@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import '../styles/cards.css';
 
 const CardFlipper = ({ frontImage, backImage, allImages, onImageChange }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(true);
   const [currentFrontImage, setCurrentFrontImage] = useState(frontImage);
   const [currentImageIndex, setCurrentImageIndex] = useState(-1);
   const [zRotation, setZRotation] = useState(0);
@@ -20,9 +20,9 @@ const CardFlipper = ({ frontImage, backImage, allImages, onImageChange }) => {
       setCurrentImageIndex(index);
       
       // Call onImageChange only once during initialization
-      if (onImageChange && index !== -1) {
+      if (onImageChange && index === -1) {
         // Pass the index and flipped state (false for initial render)
-        onImageChange(index, false);
+        onImageChange(index, true);
       }
       
       isInitialized.current = true;
@@ -57,6 +57,7 @@ const CardFlipper = ({ frontImage, backImage, allImages, onImageChange }) => {
         // If flipped to back, pass -1 as index to indicate back is showing
         // Otherwise pass the current image index
         onImageChange(isFlipped ? -1 : currentImageIndex, isFlipped);
+        console.log(isFlipped);
       }
       prevIsFlipped.current = isFlipped;
     }
@@ -105,7 +106,7 @@ const CardFlipper = ({ frontImage, backImage, allImages, onImageChange }) => {
       <motion.div
         className="card-inner"
         animate={{
-          rotateY: isFlipped ? 0 : 180,
+          rotateY: isFlipped ? 180 : 0,
         }}
         transition={{ duration: 0.25, ease: 'anticipate' }}
       >
