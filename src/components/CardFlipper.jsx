@@ -108,7 +108,7 @@ const CardFlipper = ({ frontImage, backImage, allImages, onImageChange }) => {
         animate={{
           rotateY: isFlipped ? 180 : 0,
         }}
-        transition={{ duration: 0.25, ease: 'anticipate' }}
+        transition={{ duration: 0.5, ease: 'anticipate' }}
       >
         <motion.div
           style={{ backgroundImage: `url(${backImage})` }}

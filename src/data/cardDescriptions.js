@@ -279,14 +279,14 @@ export const objectDescriptions = [
     "context": "Apparatus designs often reveal the underlying values and power structures of their creators, determining who can access or operate them and who benefits from their function."
   },
   {
-    "name": "Branded Beverage",
-    "description": "A consumable product associated with a specific identity or image.",
-    "context": "Branded beverages operate at the intersection of commerce, culture, and personal identity, where taste is shaped as much by marketing as by ingredients. They embody narratives of lifestyle, exclusivity, and mass appeal, often becoming symbols of collective experience or aspirational living."
-  },
-  {
     "name": "Imaging Thing",
     "description": "A device used to capture, process, or display images.",
     "context": "Imaging technologies mediate our perception of reality, influencing memory, truth, and the ways in which we document and interpret the world around us."
+  },
+  {
+    "name": "Branded Beverage",
+    "description": "A consumable product associated with a specific identity or image.",
+    "context": "Branded beverages operate at the intersection of commerce, culture, and personal identity, where taste is shaped as much by marketing as by ingredients. They embody narratives of lifestyle, exclusivity, and mass appeal, often becoming symbols of collective experience or aspirational living."
   },
   {
     "name": "Clock/Time Thing",
@@ -364,7 +364,7 @@ export const objectDescriptions = [
     "context": "Cleaning technologies automate maintenance, influencing domestic labor and shaping societal expectations of cleanliness and hygiene."
   },
   {
-    "name": "Refrigeratorp",
+    "name": "Refrigerator",
     "description": "An appliance for preserving food through cooling.",
     "context": "Refrigeration extends the lifespan of perishables, fundamentally altering food supply chains, consumption habits, and cultural practices around meal preparation."
   },
