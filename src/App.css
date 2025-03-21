@@ -16,13 +16,73 @@
   -webkit-text-size-adjust: 100%;
 }
 
+html, body {
+  @apply overscroll-none;
+}
+
+/* Update the container class */
 .container {
   @apply mx-auto;
-  @apply pt-[2vh];
+  min-height: 100vh; /* Use min-height instead of height to ensure content doesn't overflow */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start; /* Changed from center to allow content to start from top */
   text-align: center;
+  padding: 2vh 0; /* Convert pt-[2vh] to padding top and add some bottom padding */
+  overflow: visible; /* Allow content to overflow the container */
+}
+
+/* Add a new class for the main grid container */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Default for mobile */
+  gap: 2rem;
+  flex: 1; /* Make it take up all available space in the container */
+  height: 100%; /* Fill the container height */
+  min-height: 0; /* Prevent content from forcing a taller container */
+  overflow: visible; /* Allow content to overflow the grid */
+}
+
+/* Media query for desktop layout */
+@media (min-width: 768px) {
+  .main-grid {
+    grid-template-columns: 1fr 1fr; /* Two equal columns on desktop */
+  }
+}
+
+/* Add these classes to ensure columns take full height */
+.card-deck-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: visible; /* Allow cards to overflow */
+}
+
+.editor-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow-y: auto; /* Keep vertical scrolling for editor content */
+  overflow-x: visible; /* But allow horizontal overflow */
+}
+
+/* Make the editor component take remaining space */
+.editor-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow it to shrink if needed */
+}
+
+/* Update diagnostics class for full height */
+.diagnostics {
+  flex: 1;
+  height: auto; /* Remove fixed height */
+  max-height: none; /* Remove max height limitation */
+  min-height: 10em;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 .logo {
@@ -110,18 +170,6 @@ button {
   }
 }
 
-.diagnostics {
-  flex: 1 1 auto;
-  height: 300px; /* Fixed height - adjust as needed */
-  max-height: 300px; /* Ensure it doesn't grow beyond this height */
-  min-height: 10em;
-  z-index: 1;
-  overflow-y: auto; /* Enable vertical scrolling */
-  overscroll-behavior: none; /* Prevents bouncing */
-  scroll-behavior: smooth; /* Makes programmatic scrolling smooth */
-  padding: 1rem; /* Optional: adds some internal spacing */
-}
-
 .diagnostics .ProseMirror {
   text-align: left;
   @apply font-bold;
@@ -157,4 +205,23 @@ button {
     outline: none;
   }
   transition: flex-basis 0.2s ease;
+}
+
+/* Update the card-wrapper class */
+.card-wrapper {
+  position: relative;
+  /*z-index: 10;  Higher z-index to ensure cards appear above other elements */
+  /* transform-style: preserve-3d; */
+}
+
+/* Update the card component styles if needed */
+.card {
+  position: relative;
+  /* transform-style: preserve-3d; */
+  /* transition: transform 0.2s; */
+}
+
+/* Add specific styles for hovered cards */
+.card:hover {
+  z-index: 20; /* Even higher z-index when hovered */
 }

@@ -98,7 +98,7 @@ const CardFlipper = ({ frontImage, backImage, allImages, onImageChange }) => {
     <motion.div
       className="card"
       onClick={handleCardClick}
-      whileHover={{ scale: 1.1, rotateZ: zRotation }}
+      whileHover={{ scale: 1.05, rotateZ: zRotation }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{ perspective: '1000px' }}

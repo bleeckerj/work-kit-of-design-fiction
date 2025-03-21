@@ -1,10 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { getCurrentWebviewWindow, WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { Editor } from '@tiptap/core'
-import StarterKit from '@tiptap/starter-kit'
-import TextStyle from '@tiptap/extension-text-style'
-import Color from '@tiptap/extension-color'
+// import { getCurrentWebviewWindow, WebviewWindow } from '@tauri-apps/api/webviewWindow';
+// import { Editor } from '@tiptap/core'
+// import StarterKit from '@tiptap/starter-kit'
+// import TextStyle from '@tiptap/extension-text-style'
+// import Color from '@tiptap/extension-color'
 
 //import { getCurrent, WebviewWindow } from '@tauri-apps/api/window';
 
@@ -494,309 +494,151 @@ imageIndices.archetype !== -1 &&
 imageIndices.object !== -1 && 
 imageIndices.extras !== -1;
 
-// Replace your editor-related code with this simpler approach
-const [editor, setEditor] = useState(null);
-const editorRef = useRef(null);
-
-// Initialize the editor when the component mounts
-useEffect(() => {
-  // Only create the editor if it doesn't already exist and the ref is available
-  if (!editor && editorRef.current) {
-    console.log("Initializing editor...");
-    
-    const newEditor = new Editor({
-      element: editorRef.current,
-      extensions: [StarterKit, TextStyle, Color],
-      content: '',
-      editorProps: {
-        attributes: {
-          class: 'text-left w-full p-4',
-        },
-      },
-    });
-    
-    setEditor(newEditor);
-  }
-  
-  // Clean up the editor when component unmounts
-  return () => {
-    if (editor) {
-      editor.destroy();
-    }
-  };
-}, [editorRef.current]); // Only run when ref changes
-
-// Update editor content when generatedFiction changes
-useEffect(() => {
-  if (editor && generatedFiction) {
-    console.log("Updating editor content with:", generatedFiction.substring(0, 50) + "...");
-    
-    // Clear existing content
-    editor.commands.clearContent();
-    
-    // Insert content by paragraphs with styling
-    const paragraphs = generatedFiction.split('\n');
-    
-    paragraphs.forEach((paragraph, index) => {
-      // Add line breaks between paragraphs
-      if (index > 0) {
-        editor.commands.insertContent('<br><br>');
-      }
-      
-      // Skip empty paragraphs
-      if (!paragraph.trim()) return;
-      
-      // Insert the paragraph with white text
-      editor.commands.insertContent({
-        type: 'text',
-        text: paragraph,
-        marks: [
-          {
-            type: 'textStyle',
-            attrs: {
-              color: '#ffffff'
-            }
-          }
-        ]
-      });
-    });
-  } else if (editor && !generatedFiction) {
-    // Clear editor when generatedFiction is empty
-    editor.commands.clearContent();
-  }
-}, [generatedFiction, editor]);
-
 return (
-  <div className="container mx-auto mt-10">
-  {/* <div
-    className="bg-[url('src/assets/images/work-kit/GravitationalCuttingMat_DSC_3739.webp')] bg-cover bg-center 
-    bg-no-repeat p-20 rounded-md"
-    style={{ boxShadow: '8px 8px 2px black',     backgroundSize: 'contain', // This maintains original proportions
-    backgroundColor: '#f5f5f5', // Add a background color for any empty space
-    minHeight: '200px'}}
-    > */}
-    {/* <div className="grid grid-cols-2 sm:grid-cols-2 gap-4"> */}
-    {/* Left Column (2x2 grid) */}
-    <div className="grid grid-cols-4 grid-rows-2 gap-4">
-    <div className="card-wrapper">
-    <CardFlipper
-    isFlipping={isFlipping}  // <-- Add this prop
-    frontImage={images.attribute}
-    backImage={attributeBackImage}
-    allImages={attributeFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('attribute', index, isFlipped)}
-    client:load
-    />
+  <div className="container flex flex-col h-screen max-h-screen overflow-hidden ">
+    {/* Main layout: two-column grid - use flex-1 to take remaining space */}
+    <div className="main-grid flex-1 overflow-hidden">
+      {/* Left column: Card deck - add overflow auto */}
+      <div className="card-deck-column overflow-auto">
+        {/* Card grid - reduce margins and padding */}
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <div className="card-wrapper">
+            <CardFlipper
+              frontImage={images.attribute}
+              backImage={attributeBackImage}
+              allImages={attributeFrontImages}
+              onImageChange={(index, isFlipped) => handleImageChange('attribute', index, isFlipped)}
+              client:load
+            />
+          </div>
+          <div className="card-wrapper">
+            <CardFlipper
+              frontImage={images.archetype}
+              backImage={archetypeBackImage}
+              allImages={archetypeFrontImages}
+              onImageChange={(index, isFlipped) => handleImageChange('archetype', index, isFlipped)}
+              client:load
+            />
+          </div>
+          <div className="card-wrapper">
+            <CardFlipper
+              frontImage={images.object}
+              backImage={objectBackImage}
+              allImages={objectFrontImages}
+              onImageChange={(index, isFlipped) => handleImageChange('object', index, isFlipped)}
+              client:load
+            />
+          </div>
+          <div className="card-wrapper">
+            <CardFlipper
+              frontImage={images.action}
+              backImage={actionBackImage}
+              allImages={actionFrontImages}
+              onImageChange={(index, isFlipped) => handleImageChange('action', index, isFlipped)}
+              client:load
+            />
+          </div>
+        </div>
+
+        {/* Fifth card - reduce margin */}
+        <div className="flex justify-center mb-4">
+          <div className="card-wrapper">
+            <CardFlipper
+              frontImage={images.extras}
+              backImage={extrasBackImage}
+              allImages={extrasFrontImages}
+              onImageChange={(index, isFlipped) => handleImageChange('extras', index, isFlipped)}
+              client:load
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Right column: Editor and card info - add overflow auto */}
+      <div className="editor-column overflow-auto">
+        {allCardsVisible && (
+          <>
+            {/* Conjure button - reduce margin */}
+            <div className="mb-2">
+              <button 
+                className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300 text-sm"
+                onClick={generateAIPrompt}
+                disabled={isGenerating}
+              >
+                {isGenerating ? "Conjuring..." : "Conjure"}
+              </button>
+            </div>
+            
+            {/* Editor component - use h-0 and flex-1 to allow it to fill space */}
+            {generatedFiction && (
+              <div className="editor-wrapper h-0 flex-1 min-h-0 overflow-auto">
+                <EditorComponent content={generatedFiction} />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Card Descriptions - make more compact */}
+        {allCardsVisible && (
+          <div className="mt-2 p-3 border border-gray-200 rounded bg-gray-50 text-xs">
+            <h3 className="font-bold mb-1">Card Descriptions:</h3>
+            
+            {/* Descriptions - make more compact */}
+            {imageIndices.attribute !== -1 && (
+              <div className="mb-1">
+                <p className="font-semibold">Attribute: {getFullCardInfoForType('attribute', imageIndices.attribute)?.name}</p>
+                <p className="text-xs italic ml-2">{getFullCardInfoForType('attribute', imageIndices.attribute)?.description}</p>
+              </div>
+            )}
+            {imageIndices.action !== -1 && (
+              <div className="mb-1">
+                <p className="font-semibold">Action: {getFullCardInfoForType('action', imageIndices.action)?.name}</p>
+                <p className="text-xs italic ml-2">{getFullCardInfoForType('action', imageIndices.action)?.description}</p>
+              </div>
+            )}
+            {imageIndices.archetype !== -1 && (
+              <div className="mb-1">
+                <p className="font-semibold">Archetype: {getFullCardInfoForType('archetype', imageIndices.archetype)?.name}</p>
+                <p className="text-xs italic ml-2">{getFullCardInfoForType('archetype', imageIndices.archetype)?.description}</p>
+              </div>
+            )}
+            {imageIndices.object !== -1 && (
+              <div className="mb-1">
+                <p className="font-semibold">Object: {getFullCardInfoForType('object', imageIndices.object)?.name}</p>
+                <p className="text-xs italic ml-2">{getFullCardInfoForType('object', imageIndices.object)?.description}</p>
+              </div>
+            )}
+            {imageIndices.extras !== -1 && (
+              <div className="mb-1">
+                <p className="font-semibold">Outcome: {getFullCardInfoForType('extras', imageIndices.extras)?.name}</p>
+                <p className="text-xs italic ml-2">{getFullCardInfoForType('extras', imageIndices.extras)?.description}</p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Design Context section - make more compact */}
+        {allCardsVisible && (
+          <div className="mt-2 p-2 border-l-4 border-blue-300 bg-blue-50 text-xs">
+            <div className="font-bold mb-1">Design Context:</div>
+            <p className="text-xs">This design fiction combines the elements to create a speculative future product or service.</p>
+          </div>
+        )}
+      </div>
     </div>
-    <div className="card-wrapper">
-    <CardFlipper
-    isFlipping={isFlipping}  // <-- Add this prop
-    frontImage={images.archetype}
-    backImage={archetypeBackImage}
-    allImages={archetypeFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('archetype', index, isFlipped)}
-    client:load
-    />
-    </div>
-    <div className="card-wrapper">
-    <CardFlipper
-    isFlipping={isFlipping}  // <-- Add this prop
-    frontImage={images.object}
-    backImage={objectBackImage}
-    allImages={objectFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('object', index, isFlipped)}
-    client:load
-    />
-    </div>
-    <div className="card-wrapper">
-    <CardFlipper
-    isFlipping={isFlipping}  // <-- Add this prop
-    frontImage={images.action}
-    backImage={actionBackImage}
-    allImages={actionFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('action', index, isFlipped)}
-    client:load
-    />
-    {/* </div> */}
-    </div>
-    {/* Right Column (single div) */}
-    <div className="sm:max-w-5/12 md:max-w-8/12 h-full flex flex-col items-center">
-    <div className="card-wrapper flex justify-center mb-auto mt-auto w-full">
-    <CardFlipper
-    isFlipping={isFlipping}  
-    frontImage={images.extras}
-    backImage={extrasBackImage}
-    allImages={extrasFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('extras', index, isFlipped)}
-    client:load
-    />
-    </div>
-    </div>
-    </div>
-    {
-      console.log(imageIndices.attribute, imageIndices.archetype, imageIndices.object, imageIndices.action, imageIndices.extras)
-    }
     
-    {/* <div className="mt-4 text-sm text-gray-600 bg-amber-100">
-      <h3 className="font-bold mb-2">Current Card Combination:</h3>
-      <p>Attribute: {imageIndices.attribute === -1 ? "Card is flipped" : currentDescriptions.attribute}</p>
-      <p>Action: {imageIndices.action !== -1 ? currentDescriptions.action : "Card is flipped"}</p>
-      <p>Archetype: {imageIndices.archetype !== -1 ? currentDescriptions.archetype : "Card is flipped"}</p>
-      <p>Object: {imageIndices.object !== -1 ? currentDescriptions.object : "Card is flipped"}</p>
-      <p>Extras: {imageIndices.extras !== -1 ? currentDescriptions.extras : "Card is flipped"}</p>
-      </div> */}
-      {/* NEW: Show descriptions */}
-      {allCardsVisible && (
-        <div className="mt-10">
-        <div className="mb-10">
-        <button 
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-        onClick={generateAIPrompt}
-        disabled={isGenerating}
-        >
-        {isGenerating ? "Conjuring..." : "Conjure"}
-        </button>
-        </div>
-        
-        {/* Use ref instead of id */}
-        <div ref={editorRef} className="diagnostics bg-blue-700 rounded-sm p-4">
-          {/* Editor will be initialized here */}
-        </div>
-        
-        </div>
-        
-      )}
-      
-      {allCardsVisible && (
-        <div className="mt-4 p-4 border-2 border-gray-200 rounded bg-gray-50">
-        <h3 className="font-bold mb-2">Card Descriptions:</h3>
-        
-        {imageIndices.attribute !== -1 && (
-          <div className="mb-2">
-          <p className="font-semibold">Attribute: {getFullCardInfoForType('attribute', imageIndices.attribute)?.name}</p>
-          <p className="text-sm italic ml-4">{getFullCardInfoForType('attribute', imageIndices.attribute)?.description}</p>
-          </div>
-        )}
-        
-        {imageIndices.action !== -1 && (
-          <div className="mb-2">
-          <p className="font-semibold">Action: {getFullCardInfoForType('action', imageIndices.action)?.name}</p>
-          <p className="text-sm italic ml-4">{getFullCardInfoForType('action', imageIndices.action)?.description}</p>
-          </div>
-        )}
-        
-        {imageIndices.archetype !== -1 && (
-          <div className="mb-2">
-          <p className="font-semibold">Archetype: {getFullCardInfoForType('archetype', imageIndices.archetype)?.name}</p>
-          <p className="text-sm italic ml-4">{getFullCardInfoForType('archetype', imageIndices.archetype)?.description}</p>
-          </div>
-        )}
-        
-        {imageIndices.object !== -1 && (
-          <div className="mb-2">
-          <p className="font-semibold">Object: {getFullCardInfoForType('object', imageIndices.object)?.name}</p>
-          <p className="text-sm italic ml-4">{getFullCardInfoForType('object', imageIndices.object)?.description}</p>
-          </div>
-        )}
-        
-        {imageIndices.extras !== -1 && (
-          <div className="mb-2">
-          <p className="font-semibold">Outcome: {getFullCardInfoForType('extras', imageIndices.extras)?.name}</p>
-          <p className="text-sm italic ml-4">{getFullCardInfoForType('extras', imageIndices.extras)?.description}</p>
-          </div>
-        )}
-        </div>
-      )}
-      
-      
-      
-      {/* NEW: Show context information (optional, could be toggled) */}
-      {allCardsVisible && (
-        <div className="mt-4 p-4 border-l-4 border-blue-300 bg-blue-50">
-        <div className="font-bold mb-2">Design Context:</div>
-        
-        {imageIndices.attribute !== -1 && (
-          <div className="mb-3">
-          <p className="font-semibold">Attribute Context:</p>
-          <p className="text-sm ml-4">{getFullCardInfoForType('attribute', imageIndices.attribute)?.context}</p>
-          </div>
-        )}
-        
-        {imageIndices.object !== -1 && (
-          <div className="mb-3">
-          <p className="font-semibold">Object Context:</p>
-          <p className="text-sm ml-4">{getFullCardInfoForType('object', imageIndices.object)?.context}</p>
-          </div>
-        )}
-        
-        {imageIndices.action !== -1 && (
-          <div className="mb-3">
-          <p className="font-semibold">Action Context:</p>
-          <p className="text-sm ml-4">{getFullCardInfoForType('action', imageIndices.action)?.context}</p>
-          </div>
-        )}
-        
-        {imageIndices.archetype !== -1 && (
-          <div className="mb-3">
-          <p className="font-semibold">Archetype Context:</p>
-          <p className="text-sm ml-4">{getFullCardInfoForType('archetype', imageIndices.archetype)?.context}</p>
-          </div>
-        )}
-        
-        {imageIndices.extras !== -1 && (
-          <div className="mb-3">
-          <p className="font-semibold">Outcome Context:</p>
-          <p className="text-sm ml-4">{getFullCardInfoForType('extras', imageIndices.extras)?.context}</p>
-          </div>
-        )}
-        </div>
-      )}
-      
-      {/* Your existing design fiction generator */}
-      <div className="mt-8 p-4 border-2 border-black bg-white">
-      <div className="font-bold text-lg mb-4">Current Design Fiction:</div>
+    {/* Status indicator - reduce margin and padding */}
+    <div className="mt-2 p-2 border border-black bg-white w-full">
       {allCardsVisible ? (
-        
-        <p className="text-lg">
-        A <span className="font-bold text-white">{currentDescriptions.attribute}</span>{" "}
-        <span className="font-bold">{currentDescriptions.object}</span> that{" "}
-        <span className="font-bold">{currentDescriptions.action}s</span> like a{" "}
-        <span className="font-bold">{currentDescriptions.archetype}</span> with{" "}
-        <span className="font-bold">{currentDescriptions.extras}</span> characteristics.
-        </p>
-        
-      ) : (
-        <p>Flip all cards to reveal the complete design fiction prompt.</p>
-      )}
-      
-      </div>
-      
-      {/* You could also add a button to generate AI content using the full context */}
-      {allCardsVisible && (
-        <div className="mt-8">
-        <button 
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-        onClick={generateAIPrompt}
-        disabled={isGenerating}
-        >
-        {isGenerating ? "Conjuring..." : "Conjure"}
-        </button>
-        
-        {generatedFiction && (
-          <div  className="mt-4 p-6 border-4 border-blue-200 bg-blue-50 rounded">
-          <div className="font-bold text-lg mb-4">Generated Design Fiction:</div>
-          <div id="generated-design-fiction" className="prose text-left">
-          {generatedFiction.split('\n').map((paragraph, i) => (
-            <p key={i}>{paragraph}</p>
-          ))}
-          </div>
-          </div>
-        )}
+        <div className="bg-gray-200 p-1 rounded-md text-xs font-mono">
+          A {currentDescriptions.attribute}{" "}{currentDescriptions.object}{" "}that{" "}{currentDescriptions.action}{" "}like a{" "}{currentDescriptions.archetype}{" "}with{" "}{currentDescriptions.extras}{" "}characteristics.
         </div>
+      ) : (
+        <div className="text-center text-sm">Flip cards to reveal design fiction prompt.</div>
       )}
-      </div>
-      // </div>
-    );
-  };
+    </div>
+  </div>
+);
+};
   
-  export default ShuffleComponent;
+export default ShuffleComponent;
