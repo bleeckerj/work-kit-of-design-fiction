@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "width": 800,
+        "width": 1100,
         "height": 900,
-        "resizable": false,
+        "minWidth": 900,
+        "minHeight": 700,
+        "resizable": true,
         "title" : "Work Kit of Design Fiction",
         "decorations" : true,
         "transparent" : true

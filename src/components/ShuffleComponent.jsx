@@ -19,6 +19,7 @@ import {
   extrasDescriptions
 } from '../data/cardDescriptions';
 import EditorComponent from './EditorComponent';
+import JSONEditorComponent from './JSONEditorComponent';
 
 const getRandomImage = (images) => {
   if (!images || images.length === 0) {
@@ -524,171 +525,221 @@ For example 'Magazine Article' indicates that we are meant to represent this con
   imageIndices.archetype !== -1 && 
   imageIndices.object !== -1 && 
   imageIndices.extras !== -1;
+
+  // Add this state near your other state variables
+  const [editorType, setEditorType] = useState('rich'); // 'rich' or 'json'
   
   return (
-    <div className="container flex flex-col h-screen max-h-screen overflow-hidden ">
-    {/* Main layout: two-column grid - use flex-1 to take remaining space */}
-    <div className="main-grid flex-1 overflow-hidden">
-    {/* Left column: Card deck - add overflow auto */}
-    <div className="card-deck-column overflow-auto">
-    {/* Card grid - reduce margins and padding */}
-    <div className="grid grid-cols-2 gap-2 mb-2">
-    <div className="card-wrapper">
-    <CardFlipper
-    frontImage={images.attribute}
-    backImage={attributeBackImage}
-    allImages={attributeFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('attribute', index, isFlipped)}
-    client:load
-    />
-    </div>
-    <div className="card-wrapper">
-    <CardFlipper
-    frontImage={images.archetype}
-    backImage={archetypeBackImage}
-    allImages={archetypeFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('archetype', index, isFlipped)}
-    client:load
-    />
-    </div>
-    <div className="card-wrapper">
-    <CardFlipper
-    frontImage={images.object}
-    backImage={objectBackImage}
-    allImages={objectFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('object', index, isFlipped)}
-    client:load
-    />
-    </div>
-    <div className="card-wrapper">
-    <CardFlipper
-    frontImage={images.action}
-    backImage={actionBackImage}
-    allImages={actionFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('action', index, isFlipped)}
-    client:load
-    />
-    </div>
-    </div>
-    
-    {/* Fifth card - reduce margin */}
-    <div className="flex justify-center mb-4">
-    <div className="card-wrapper">
-    <CardFlipper
-    frontImage={images.extras}
-    backImage={extrasBackImage}
-    allImages={extrasFrontImages}
-    onImageChange={(index, isFlipped) => handleImageChange('extras', index, isFlipped)}
-    client:load
-    />
-    </div>
-    </div>
-    </div>
-    
-    {/* Right column: Editor and card info - add overflow auto */}
-    <div className="editor-column overflow-y-auto overflow-x-visible">
-    {allCardsVisible && (
-      <div className="mb-2">
-  <button 
-    className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300 text-sm w-32"
-    onClick={generateAIPrompt}
-    disabled={isGenerating}
-  >
-    <span className="inline-block text-center relative">
-      {isGenerating ? (
-        <>
-          Conjuring
-          <span className="absolute left-full">
-            {loadingDots}
-          </span>
-        </>
-      ) : (
-        "Conjure"
-      )}
-    </span>
-  </button>
-</div>
-    )}
-    
-    {/* Editor is always visible */}
-    <div className="editor-wrapper h-0 flex-1 min-h-0 overflow-auto">
-    {generatedFiction ? (
-      <EditorComponent content={generatedFiction} />
-    ) : (
-      <div className="editor-placeholder">
-  {isGenerating ? (
-    <span className="relative">
-      Conjuring
-      <span className="absolute left-full">{loadingDots}</span>
-    </span>
-  ) : (
-    "Click 'Conjure' Emanate Concepts"
-  )}
-</div>
-    )}
+    // Update the outer container to remove padding and margins
+    <div className=" bg-gray-200 flex flex-col h-screen max-h-screen overflow-hidden p-0 m-0 w-full">
+      {/* Main layout: two-column grid - extend to edges */}
+      <div className="main-layout-grid grid flex-1 overflow-hidden
+            grid-cols-1 
+            sm:grid-cols-[460px_1fr] 
+            gap-0
+            w-full">
+
+        {/* Left column: Card deck - maintain fixed width but touch edge */}
+        <div className="card-deck-column flex flex-col overflow-auto 
+                  w-full sm:w-[460px] 
+                  shrink-0 bg-gray-200 pt-8 px-2"> 
+          {/* Card grid - reduce margins and padding */}
+          <div className="grid grid-cols-2 gap-1 sm:gap-0 mb-2">
+            <div className="card-wrapper">
+              <CardFlipper
+                frontImage={images.attribute}
+                backImage={attributeBackImage}
+                allImages={attributeFrontImages}
+                onImageChange={(index, isFlipped) => handleImageChange('attribute', index, isFlipped)}
+                client:load
+              />
+            </div>
+            <div className="card-wrapper">
+              <CardFlipper
+                frontImage={images.archetype}
+                backImage={archetypeBackImage}
+                allImages={archetypeFrontImages}
+                onImageChange={(index, isFlipped) => handleImageChange('archetype', index, isFlipped)}
+                client:load
+              />
+            </div>
+            <div className="card-wrapper">
+              <CardFlipper
+                frontImage={images.object}
+                backImage={objectBackImage}
+                allImages={objectFrontImages}
+                onImageChange={(index, isFlipped) => handleImageChange('object', index, isFlipped)}
+                client:load
+              />
+            </div>
+            <div className="card-wrapper">
+              <CardFlipper
+                frontImage={images.action}
+                backImage={actionBackImage}
+                allImages={actionFrontImages}
+                onImageChange={(index, isFlipped) => handleImageChange('action', index, isFlipped)}
+                client:load
+              />
+            </div>
+          </div>
+
+          {/* Fifth card - reduce margin */}
+          <div className="flex justify-center mb-4">
+            <div className="card-wrapper">
+              <CardFlipper
+                frontImage={images.extras}
+                backImage={extrasBackImage}
+                allImages={extrasFrontImages}
+                onImageChange={(index, isFlipped) => handleImageChange('extras', index, isFlipped)}
+                client:load
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Right column: Editor - touch right edge */}
+        <div className="editor-column px-2 flex flex-col min-h-full overflow-y-auto overflow-x-visible w-full border-l border-gray-300"> 
+          
+          {/* Editor is always visible */}
+          <div className="editor-wrapper h-0 flex-1 min-h-0 overflow-auto">
+            {/* Editor type selector */}
+            <div className="flex justify-end mb-1">
+              <div className="inline-flex rounded-md shadow-sm" role="group">
+              {allCardsVisible && (
+            <div className="mb-0">
+              <button 
+                className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300 text-sm w-32"
+                onClick={generateAIPrompt}
+                disabled={isGenerating}
+              >
+                <span className="inline-block text-center relative">
+                  {isGenerating ? (
+                    <>
+                      Conjuring
+                      <span className="absolute left-full">
+                        {loadingDots}
+                      </span>
+                    </>
+                  ) : (
+                    "Conjure"
+                  )}
+                </span>
+              </button>
+            </div>
+          )}
+
+                <button 
+                  type="button"
+                  onClick={() => setEditorType('rich')}
+                  className={`px-2 py-1 text-xs font-medium rounded-l-lg ${
+                    editorType === 'rich' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  Rich Text
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setEditorType('json')}
+                  className={`px-2 py-1 text-xs font-medium rounded-r-lg ${
+                    editorType === 'json' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  JSON
+                </button>
+              </div>
+            </div>
+            
+            {/* Render the appropriate editor based on selection */}
+            {editorType === 'rich' ? (
+              <EditorComponent 
+                content={generatedFiction || ""} 
+                placeholder={
+                  isGenerating ? 
+                    <span className="relative">
+                      Conjuring
+                      <span className="absolute left-full">{loadingDots}</span>
+                    </span> : 
+                    "Click 'Conjure' to generate design fiction"
+                }
+                isGenerating={isGenerating}
+              />
+            ) : (
+              <JSONEditorComponent 
+                content={generatedFiction || ""} 
+                placeholder={
+                  isGenerating ? 
+                    <span className="relative">
+                      Conjuring
+                      <span className="absolute left-full">{loadingDots}</span>
+                    </span> : 
+                    "Click 'Conjure' to generate design fiction"
+                }
+                isGenerating={isGenerating}
+                onChange={(jsonString) => {
+                  // Optionally handle changes to the JSON
+                  // setGeneratedFiction(jsonString);
+                }}
+              />
+            )}
+          </div>
+
+          {/* Card Descriptions - only show when cards are visible */}
+          {allCardsVisible && (
+            <div className="mt-2 p-3 border border-gray-200 rounded bg-gray-50 text-xs">
+              <h3 className="font-bold mb-1">Card Descriptions:</h3>
+              
+              {/* Descriptions - make more compact */}
+              {imageIndices.attribute !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Attribute: {getFullCardInfoForType('attribute', imageIndices.attribute)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('attribute', imageIndices.attribute)?.description}</p>
+                </div>
+              )}
+              {imageIndices.action !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Action: {getFullCardInfoForType('action', imageIndices.action)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('action', imageIndices.action)?.description}</p>
+                </div>
+              )}
+              {imageIndices.archetype !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Archetype: {getFullCardInfoForType('archetype', imageIndices.archetype)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('archetype', imageIndices.archetype)?.description}</p>
+                </div>
+              )}
+              {imageIndices.object !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Object: {getFullCardInfoForType('object', imageIndices.object)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('object', imageIndices.object)?.description}</p>
+                </div>
+              )}
+              {imageIndices.extras !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Outcome: {getFullCardInfoForType('extras', imageIndices.extras)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('extras', imageIndices.extras)?.description}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       
-      {/* Card Descriptions - only show when cards are visible */}
-      {allCardsVisible && (
-        <div className="mt-2 p-3 border border-gray-200 rounded bg-gray-50 text-xs">
-        <h3 className="font-bold mb-1">Card Descriptions:</h3>
-        
-        {/* Descriptions - make more compact */}
-        {imageIndices.attribute !== -1 && (
-          <div className="mb-1">
-          <p className="font-semibold">Attribute: {getFullCardInfoForType('attribute', imageIndices.attribute)?.name}</p>
-          <p className="text-xs italic ml-2">{getFullCardInfoForType('attribute', imageIndices.attribute)?.description}</p>
-          </div>
-        )}
-        {imageIndices.action !== -1 && (
-          <div className="mb-1">
-          <p className="font-semibold">Action: {getFullCardInfoForType('action', imageIndices.action)?.name}</p>
-          <p className="text-xs italic ml-2">{getFullCardInfoForType('action', imageIndices.action)?.description}</p>
-          </div>
-        )}
-        {imageIndices.archetype !== -1 && (
-          <div className="mb-1">
-          <p className="font-semibold">Archetype: {getFullCardInfoForType('archetype', imageIndices.archetype)?.name}</p>
-          <p className="text-xs italic ml-2">{getFullCardInfoForType('archetype', imageIndices.archetype)?.description}</p>
-          </div>
-        )}
-        {imageIndices.object !== -1 && (
-          <div className="mb-1">
-          <p className="font-semibold">Object: {getFullCardInfoForType('object', imageIndices.object)?.name}</p>
-          <p className="text-xs italic ml-2">{getFullCardInfoForType('object', imageIndices.object)?.description}</p>
-          </div>
-        )}
-        {imageIndices.extras !== -1 && (
-          <div className="mb-1">
-          <p className="font-semibold">Outcome: {getFullCardInfoForType('extras', imageIndices.extras)?.name}</p>
-          <p className="text-xs italic ml-2">{getFullCardInfoForType('extras', imageIndices.extras)?.description}</p>
-          </div>
-        )}
-        </div>
-      )}
-      
-      {/* Design Context section - only show when cards are visible */}
-      {/* {allCardsVisible && (
-        <div className="mt-2 p-2 border-l-4 border-blue-300 bg-blue-50 text-xs">
-        <div className="font-bold mb-1">Design Context:</div>
-        <p className="text-xs">This design fiction combines the elements to create a speculative future product or service.</p>
-        </div>
-        )} */}
-        </div>
-        </div>
-        
-        {/* Status indicator - reduce margin and padding */}
-        <div className="mt-2 p-2 border border-black bg-white w-full">
+      {/* Status indicator - reduce margin and padding */}
+      <div className="mt-2 p-2 border-[0.5px] border-black bg-white w-full">
         {allCardsVisible ? (
           <div className="bg-gray-200 p-1 rounded-md text-xs font-mono">
-          A {currentDescriptions.attribute}{" "}{currentDescriptions.object}{" "}that{" "}{currentDescriptions.action}{" "}like a{" "}{currentDescriptions.archetype}{" "}with{" "}{currentDescriptions.extras}{" "}characteristics.
+            A {currentDescriptions.attribute}{" "}{currentDescriptions.object}{" "}that{" "}{currentDescriptions.action}{" "}like a{" "}{currentDescriptions.archetype}{" "}with{" "}{currentDescriptions.extras}{" "}characteristics.
           </div>
         ) : (
-          <div className="text-center text-sm">Flip cards to reveal design fiction prompt.</div>
+          <div className="w-full text-center text-sm">Flip cards to reveal design fiction prompt.</div>
         )}
-        </div>
-        </div>
-      );
-    };
-    
-    export default ShuffleComponent;
+      </div>
+    </div>
+  );
+};
+
+export default ShuffleComponent;

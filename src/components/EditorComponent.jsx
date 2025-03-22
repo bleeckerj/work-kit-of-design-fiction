@@ -4,76 +4,56 @@ import StarterKit from '@tiptap/starter-kit';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 
-const EditorComponent = ({ content }) => {
+const EditorComponent = ({ content, placeholder, isGenerating }) => {
   const [editor, setEditor] = useState(null);
   const containerRef = useRef(null);
+  const showPlaceholder = !content || content.trim() === "";
   
   // Initialize editor when component mounts
   useEffect(() => {
-    if (containerRef.current && !editor) {
-      const newEditor = new Editor({
-        element: containerRef.current,
-        autofocus: false,
-        editable: true,
-        extensions: [StarterKit, TextStyle, Color],
-        editorProps: {
-          attributes: {
-            class: 'text-left w-full p-4',
-          },
+    if (!containerRef.current) return;
+    
+    const newEditor = new Editor({
+      element: containerRef.current,
+      extensions: [StarterKit, TextStyle, Color],
+      content: content || '',
+      editorProps: {
+        attributes: {
+          class: 'prose p-4 min-h-[200px] text-white text-left',
         },
-      });
-      
-      setEditor(newEditor);
-    }
-    
-    return () => {
-      if (editor) {
-        editor.destroy();
-      }
-    };
-  }, []);
-  
-  // Update content when prop changes
-  useEffect(() => {
-    if (!editor) return;
-    
-    // Clear content when empty string is passed
-    if (!content || content === '') {
-      editor.commands.clearContent();
-      return;
-    }
-    
-    // Otherwise update with new content
-    editor.commands.clearContent();
-    
-    // Split by paragraphs
-    const paragraphs = content.split('\n');
-    
-    // Insert each paragraph with proper spacing
-    paragraphs.forEach((paragraph, index) => {
-      // Add line break between paragraphs
-      if (index > 0) {
-        editor.commands.insertContent('<br><br>');
-      }
-      
-      // Don't insert empty paragraphs
-      if (paragraph.trim()) {
-        editor.commands.insertContent({
-          type: 'text',
-          text: paragraph,
-          marks: [{ 
-            type: 'textStyle', 
-            attrs: { color: '#ffffff' } 
-          }]
-        });
-      }
+      },
     });
     
-    // Verify content was set
-    console.log("Editor HTML after update:", editor.getHTML());
-  }, [content, editor]);
+    setEditor(newEditor);
+    
+    // Clean up on unmount
+    return () => {
+      if (newEditor) {
+        newEditor.destroy();
+      }
+    };
+  }, [containerRef.current]);
   
-  return <div ref={containerRef} className="diagnostics bg-blue-700 rounded-sm" />;
+  // Update editor content when content prop changes
+  useEffect(() => {
+    if (editor && content) {
+      editor.commands.setContent(content);
+    }
+  }, [editor, content]);
+  
+  return (
+    <div className="editor-container relative w-full h-full flex flex-col border border-gray-300 rounded bg-blue-500">
+      {/* Editor area */}
+      <div ref={containerRef} className="w-full h-full min-h-[200px]" />
+      
+      {/* Placeholder overlay that appears when editor is empty */}
+      {showPlaceholder && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-200 font-mono pointer-events-none p-4">
+          {typeof placeholder === 'string' ? placeholder : placeholder}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default EditorComponent;
