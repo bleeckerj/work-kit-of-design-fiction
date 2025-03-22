@@ -19,7 +19,7 @@ const EditorComponent = ({ content, placeholder, isGenerating }) => {
       content: content || '',
       editorProps: {
         attributes: {
-          class: 'prose p-4 min-h-[200px] text-white text-left',
+          class: 'prose p-4 h-full min-h-[200px] text-white bg-black text-left',
         },
       },
     });
@@ -42,11 +42,46 @@ const EditorComponent = ({ content, placeholder, isGenerating }) => {
   }, [editor, content]);
   
   return (
-    <div className="editor-container relative w-full h-full flex flex-col border border-gray-300 rounded bg-blue-500">
+    <div className="editor-container relative w-full h-full flex flex-col border border-gray-300 rounded bg-black overflow-auto">
       {/* Editor area */}
       <div ref={containerRef} className="w-full h-full min-h-[200px]" />
       
-      {/* Placeholder overlay that appears when editor is empty */}
+      {/* Add custom CSS to fix the background issue */}
+      <style jsx global>{`
+        /* Make the editor grow with content */
+        .ProseMirror {
+          min-height: 100%;
+          height: 100%;
+          background: oklch(0.488 0.243 264.376);
+          color: white;
+          overflow: auto;
+        }
+        
+        /* Fix selection styling */
+        .ProseMirror .selection {
+          background-color: #0063eb;
+        }
+        
+        /* Fix the text styling */
+        .ProseMirror p {
+          margin-top: 0.5em;
+          margin-bottom: 0.5em;
+        }
+        
+        /* Force the editor to take the full height */
+        .tiptap {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        /* Ensure the editor content area grows */
+        .tiptap .ProseMirror {
+          flex-grow: 1;
+        }
+      `}</style>
+      
+      {/* Placeholder overlay */}
       {showPlaceholder && (
         <div className="absolute inset-0 flex items-center justify-center text-gray-200 font-mono pointer-events-none p-4">
           {typeof placeholder === 'string' ? placeholder : placeholder}

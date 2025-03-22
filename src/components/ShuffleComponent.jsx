@@ -601,7 +601,7 @@ For example 'Magazine Article' indicates that we are meant to represent this con
         <div className="editor-column px-2 flex flex-col min-h-full overflow-y-auto overflow-x-visible w-full border-l border-gray-300"> 
           
           {/* Editor is always visible */}
-          <div className="editor-wrapper h-0 flex-1 min-h-0 overflow-auto">
+          <div className="h-full flex-1 min-h-0 overflow-auto">
             {/* Editor type selector */}
             <div className="flex justify-end mb-1">
               <div className="inline-flex rounded-md shadow-sm" role="group">
