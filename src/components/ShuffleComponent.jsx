@@ -75,7 +75,7 @@ const ShuffleComponent = ({
   
   const [generatedFiction, setGeneratedFiction] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("llama3.2");
+  const [selectedModel, setSelectedModel] = useState("llama3.2:latest");
   
   // Add this state and effect for animating the loading dots
   const [loadingDots, setLoadingDots] = useState('');
