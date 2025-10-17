@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 .card-wrapper {
-  width: 100%;
+  width: 80%;
   max-width: 201px; /* or whatever maximum width you desire */
   position: relative;
 }

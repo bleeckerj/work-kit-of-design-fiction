@@ -136,6 +136,35 @@ fn log(level: &str, msg: &str) {
     eprintln!("{} [{}] {}", now.format("%Y-%m-%d %H:%M:%S"), level, msg);
 }
 
+// Strip leading/trailing code fences (```json ... ```) or single backticks around model output
+fn strip_fences(s: &str) -> String {
+    let mut t = s.trim().to_string();
+
+    // Remove triple-backtick fence with optional language identifier
+    if t.starts_with("```") && t.ends_with("```") {
+        // remove first line if it contains language
+        let inner = t.trim_start_matches('`').trim_matches('`').trim().to_string();
+        return inner;
+    }
+
+    // Remove any leading ```lang\n and trailing ```
+    if let Some(idx) = t.find("\n") {
+        if t.starts_with("```") {
+            let without_first = t.splitn(2, '\n').nth(1).unwrap_or(&t).to_string();
+            if without_first.ends_with("```") {
+                return without_first.trim_end_matches('`').trim().to_string();
+            }
+        }
+    }
+
+    // Remove single backticks around the whole string
+    if t.starts_with('`') && t.ends_with('`') {
+        t = t[1..t.len()-1].to_string();
+    }
+
+    t
+}
+
 async fn call_ollama(base_url: &str, prompt: String, model: Option<String>) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
     let model_name = model.unwrap_or_else(|| "llama2".to_string());
@@ -158,20 +187,20 @@ async fn call_ollama(base_url: &str, prompt: String, model: Option<String>) -> R
     if status.is_success() {
         // Try to decode into the expected shape, otherwise try a few heuristics
         if let Ok(ollama_response) = serde_json::from_str::<OllamaResponse>(&text) {
-            return Ok(ollama_response.response);
+            return Ok(strip_fences(&ollama_response.response));
         }
 
         // Try generic JSON extraction
         if let Ok(json_val) = serde_json::from_str::<serde_json::Value>(&text) {
             // Common keys that might contain generated text
             if let Some(s) = json_val.get("response").and_then(|v| v.as_str()) {
-                return Ok(s.to_string());
+                return Ok(strip_fences(s));
             }
             if let Some(s) = json_val.get("text").and_then(|v| v.as_str()) {
-                return Ok(s.to_string());
+                return Ok(strip_fences(s));
             }
             if let Some(s) = json_val.get("output").and_then(|v| v.as_str()) {
-                return Ok(s.to_string());
+                return Ok(strip_fences(s));
             }
             // If output is an array, join textual pieces
             if let Some(arr) = json_val.get("output").and_then(|v| v.as_array()) {
@@ -186,13 +215,13 @@ async fn call_ollama(base_url: &str, prompt: String, model: Option<String>) -> R
                     }
                 }
                 if !parts.is_empty() {
-                    return Ok(parts.join("\n\n"));
+                    return Ok(strip_fences(&parts.join("\n\n")));
                 }
             }
         }
 
-        // As last resort, return the raw body text
-        return Ok(text);
+        // As last resort, return the raw body text (sanitized)
+        return Ok(strip_fences(&text));
     } else {
         Err(format!("Ollama API error (status {}): {}", status, text).into())
     }
@@ -225,13 +254,13 @@ async fn call_openai(api_key: &str, prompt: String, model: Option<String>) -> Re
         // Try to extract the textual content from the standard chat completion shape
         if let Some(choice) = json.get("choices").and_then(|c| c.get(0)) {
             if let Some(message) = choice.get("message") {
-                if let Some(content) = message.get("content") {
-                    return Ok(content.as_str().unwrap_or_default().to_string());
+                    if let Some(content) = message.get("content") {
+                    return Ok(strip_fences(content.as_str().unwrap_or_default()));
                 }
             }
         }
-        // Fallback: return full JSON as string
-        Ok(json.to_string())
+        // Fallback: return full JSON as string (sanitized)
+        Ok(strip_fences(&json.to_string()))
     } else {
         let error_text = resp.text().await?;
         Err(format!("OpenAI API error: {}", error_text).into())
@@ -275,7 +304,7 @@ async fn call_lmstudio(base_url: &str, prompt: String, model: Option<String>) ->
                     }
                 }
                 if !parts.is_empty() {
-                    return Ok(parts.join("\n\n"));
+                    return Ok(strip_fences(&parts.join("\n\n")));
                 }
             }
 
@@ -285,22 +314,22 @@ async fn call_lmstudio(base_url: &str, prompt: String, model: Option<String>) ->
                     if let Some(msg) = first.get("message") {
                         if let Some(content) = msg.get("content") {
                             if let Some(arr) = content.as_array() {
-                                for item in arr {
-                                    if let Some(txt) = item.get("text").and_then(|t| t.as_str()) {
-                                        return Ok(txt.to_string());
+                                        for item in arr {
+                                            if let Some(txt) = item.get("text").and_then(|t| t.as_str()) {
+                                                return Ok(strip_fences(txt));
+                                            }
+                                        }
+                                    } else if let Some(text_s) = content.get("text").and_then(|t| t.as_str()) {
+                                        return Ok(strip_fences(text_s));
                                     }
-                                }
-                            } else if let Some(text_s) = content.get("text").and_then(|t| t.as_str()) {
-                                return Ok(text_s.to_string());
-                            }
                         }
                     }
                 }
             }
         }
 
-        // Fallback: return raw body
-        Ok(text)
+                // Fallback: return raw body (sanitized)
+                Ok(strip_fences(&text))
     } else {
         Err(format!("LMStudio API error (status {}): {}", status, text).into())
     }

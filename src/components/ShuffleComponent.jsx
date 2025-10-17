@@ -18,8 +18,7 @@ import {
   actionDescriptions,
   extrasDescriptions
 } from '../data/cardDescriptions';
-import EditorComponent from './EditorComponent';
-// JSON editor removed — always use rich EditorComponent
+import ResponseViewer from './ResponseViewer';
 
 const getRandomImage = (images) => {
   if (!images || images.length === 0) {
@@ -431,111 +430,36 @@ const ShuffleComponent = ({
   const formatLlamaPrompt = (elements) => {
     const { attributeInfo, actionInfo, archetypeInfo, objectInfo, extrasInfo } = elements;
     
+    
+    // Use a JS-safe template string: avoid embedding raw backtick characters (```) which would terminate
+    // the surrounding template literal. Spell out sequences instead of using literal backticks.
     return `<|system|>
-  You are a creative design fiction generator who helps designers imagine speculative future products and services. Your task is to create plausible near-future scenarios that integrate the provided elements in coherent and thought-provoking ways.
-  
-  Do not mention a time horizon or year. Focus on the design and its social implications. Do not make the explication sound too futuristic or science-fictional. Do not over-index on specific technology ("AI" or "VR" or "AR") unless it is in very generic terms. COnsider technical jargon as useful indicators of future contexts, implications of contexts external to the design (eg regulatory contexts, policy or governance requirements, regulations, specifications, data standards, and related jargon-laced contexts.)
-  
-  Consider the practice of Design Fiction as a way to imply future contexts through artifacts — products, services, mundane quotidian objects - that are imbued with social, cultural, and political meaning.
-  
-  Provide a user experience scenario or description that is both plausible and provocative, grounded in the elements provided.
-  
-The [ARCHETYPE] is "${archetypeInfo.name}" and is how the Design Fiction concept is represented as an artifact — an item that one might find in the world. 
-    
-The [ARCHETYPE] description is "${archetypeInfo.description}" and explains how the concept should be represented as an artifact. 
-    
-For example 'Magazine Article' indicates that we are meant to represent this concept in the form of a prose-based magazine article. 'Embroidered Patch' indicates that our concept should be implied through the form of a physical patch that could be sewn onto a garment. Such might indicate affiliation with a group or club, or achievement of a goal, or as a decoration or fashion statement.
-  
-  Provide a meta commentary on the Design Fiction, reflecting on the process of creating the design fiction, the elements you chose, and the implications of the design fiction. Your meta commentary should not use first-person pronouns. Present in abstract terms, without reference to yourself.
-    
-  When developing the Design Fiction concept and artifact, consider relevant cultural, social, and technological trends for which this Design Fiction might be a response or a reflection. Consider the implications of these trends on the Design Fiction and the context in which it exists.
-    
-  Consider the [OUTCOME] loosely in this context to characterize the perceived value of the design fiction from excellent to very poor such that, for example, a product review for a poor [OUTCOME] would indicate disappointment or frustration, while a product review for an excellent [OUTCOME] would indicate overwhelming satisfaction or delight.
-  
-  The design fiction format is like a "MadLibs" sentence: A [ATTRIBUTE] [OBJECT] that [ACTION]s like a [ARCHETYPE] with [OUTCOME] characteristics. This is a general template to guide your narrative but not a requirement. Be creative and have fun with your scenario.
-    
-  Additional considerations: emerging technologies like Augmented Reality, Artificial Intelligence, Blockchain, Cryptocurrency, Artificial Intelligence, Machine Intelligence and others can be part of the context but should not be "over-determining" factors in the outcome. Consider that they are part of the context but not the sole focus of the design fiction. 
-  
-  Consider that they may not be referred to directly (for example, "AI-based camera", "VR headset", "Blockchain-based voting system") but if they are in some world we are imagining, they may be just assumed without having to be explicitly stated, much like we assume "smart phone" when we say "phone" today, or "digital camera" when we say "camera", or "wheels on luggage" (which is assumed) when we say "luggage." We want the context to feel normal, ordinary, everyday and so many "fetish" technologies of today like AI could be so ubiquitous that they are not even mentioned in the design fiction, but implied by the narrative or the description of the artifact.
+You are a creative design fiction generator who helps designers imagine speculative near-future products and services. Produce a plausible and thought-provoking scenario that integrates the provided elements.
 
-  Do not refer to anything as "AI-powered" or "VR-enabled" or "Blockchain-based"<div className=""></div>
-  <|user|>
-  I've drawn these cards from a design fiction deck:
-  
-  ATTRIBUTE: ${attributeInfo.name}
-  ${attributeInfo.description}
-  ${attributeInfo.context}
-  
-  OBJECT: ${objectInfo.name}
-  ${objectInfo.description}
-  ${objectInfo.context}
-  
-  ACTION: ${actionInfo.name}
-  ${actionInfo.description}
-  ${actionInfo.context}
-  
-  ARCHETYPE: ${archetypeInfo.name}
-  ${archetypeInfo.description}
-  ${archetypeInfo.context}
-  
-  OUTCOME: ${extrasInfo.name}
-  ${extrasInfo.description}
-  ${extrasInfo.context}
-  
-  Based on these cards, create a compelling description of the design fiction artifact in the form of a ${archetypeInfo.name}. Do so as a plausible near-future product or service in the form of a ${archetypeInfo.name} that combines all elements. 
-  
-  Describe the ${archetypeInfo.name} in a way that is both plausible and provocative, grounded in the elements provided.
-    
-  Also provide a narrative or user scenario or description or quotidian 'scene' that is both plausible and provocative, grounded in the elements provided.
-    
-  Format your response as JSON that includes structured data indicating the ATTRIBUTE, OBJECT, ACTION, ARCHETYPE, OUTCOME specific creative and imaginative responses.
-    
-  Only produce JSON data. DO NOT include any additional remarks or comments that are not in the JSON structure. The JSON structure is machine readable and any additional text will cause the system to reject the response or cause an error. All errors are to be avoided.
-  
-  In the JSON schema should also be included as additional elements:
-    * Artifact Description: The description of the artifact in the form of a ${archetypeInfo.name}. (Be complete and expansive with the description. Describe what this design fiction is and how it works. 
-    * User Scenario: A user scenario narrative that gives additional context and meaning to the Design Fiction. Use prose-based narrative description like a scene from a short story or movie script.
-    * Implications: Explain its implications for users, society, and culture Consider social, cultural, technological trends that this Design Fiction implies.
-    * Additional:
-      1. Meta Commentary: what are some additional reflections on the artifact from a business, cultural, brand, or design perspective? 
-      2. Reasoning: why are these elements important to the design fiction and helpful for imagining future products and services and their implications for innovation and design?
-      3. Trends: what are some relevant cultural, social, and technological trends that this Design Fiction might be a response or a reflection of?
-    
-  Be sure that your entire response is in JSON format, with no additional text or comments outside of the JSON object. If there is material that does not fit into the Zod schema, please include it in the JSON object as a comment or additional information with the key "comment" and the value as a string.
-    
-  A Zod schema for your JSON response is:
-    
-  z.object({
-    elements: z.object({
-      ATTRIBUTE: z.string(),
-      OBJECT: z.string(),
-      ACTION: z.string(),
-      ARCHETYPE: z.string(),
-      OUTCOME: z.string()
-    }),
-    artifact: z.object({
-      title: z.string(),
-      description: z.string()
-    }),
-    design: z.object({
-      artifact_description: z.string()
-    }),
-    implications: z.object({
-      social: z.string(),
-      cultural: z.string(),
-      ethical: z.string().optional()
-    }),
-    scenario: z.object({
-      narrative: z.string(),
-    }),
-    additional: z.object({
-      meta_commentary: z.string(),
-      reasoning: z.string(),
-      trends: z.string()
-    })
-  })
-    
-  <|assistant|>`;
+Do not mention a specific year. Focus on social, cultural, and design implications rather than speculative technical hype. Avoid first-person narration.
+
+Context:
+ARCHETYPE: ${archetypeInfo.name}
+ARCHETYPE_DESCRIPTION: ${archetypeInfo.description}
+
+ATTRIBUTE: ${attributeInfo.name}
+ATTRIBUTE_DESCRIPTION: ${attributeInfo.description}
+
+OBJECT: ${objectInfo.name}
+OBJECT_DESCRIPTION: ${objectInfo.description}
+
+ACTION: ${actionInfo.name}
+ACTION_DESCRIPTION: ${actionInfo.description}
+
+OUTCOME: ${extrasInfo.name}
+OUTCOME_DESCRIPTION: ${extrasInfo.description}
+
+IMPORTANT: Respond with a single JSON object only. Do not include any explanatory text before or after the JSON. Do not wrap the JSON in Markdown code fences or literal backtick characters; if you need to mention the sequence of three backticks, write it as the words "three backticks" or "triple backtick". The JSON must be valid for strict JSON.parse.
+
+Return the following JSON schema fields (use empty string for missing values):
+elements (ATTRIBUTE, OBJECT, ACTION, ARCHETYPE, OUTCOME), artifact (title, description), design (artifact_description), implications (social, cultural, ethical), scenario (narrative), additional (meta_commentary, reasoning, trends).
+
+Now produce the JSON object that conforms to the schema.`;
   };
   
   // Updated generateAIPrompt function
@@ -674,11 +598,11 @@ For example 'Magazine Article' indicates that we are meant to represent this con
               {allCardsVisible && (
             <div className="mb-0">
               <button 
-                className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300 text-sm w-32"
+                className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 text-sm w-fit"
                 onClick={generateAIPrompt}
                 disabled={isGenerating || !(Array.isArray(availableModels) && availableModels.length > 0 && selectedModel)}
               >
-                <span className="inline-block text-center relative">
+                <span className="inline-block text-center relative font-mono text-sm">
                   {isGenerating ? (
                     <>
                       Conjuring
@@ -698,42 +622,56 @@ For example 'Magazine Article' indicates that we are meant to represent this con
               <div className="ml-2 flex items-center space-x-2">
                 <div className="flex items-center space-x-2">
                   <label htmlFor="provider" className="sr-only">Provider</label>
-                  <select
-                    id="provider"
-                    value={provider}
-                    onChange={(e) => setProvider(e.target.value)}
-                    className="text-xs px-2 py-1 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    aria-label="LLM provider"
-                  >
-                    <option value="ollama">Ollama (local)</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="lmstudio">LMStudio</option>
-                  </select>
+                  <div className="relative inline-block">
+                    <select
+                      id="provider"
+                      value={provider}
+                      onChange={(e) => setProvider(e.target.value)}
+                      className="font-mono text-[0.8em] appearance-none text-xs px-2 py-1 border rounded bg-white pr-6 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      aria-label="LLM provider"
+                    >
+                      <option value="ollama">Ollama (local)</option>
+                      <option value="openai">OpenAI</option>
+                      <option value="lmstudio">LMStudio</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                      <svg className="w-3 h-3 text-gray-700" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+                        <path d="M6 8l4 4 4-4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  </div>
 
-                  <input
+                  {/* <input
                     type="text"
                     placeholder="Base URL (optional)"
                     value={providerBaseUrl}
                     onChange={(e) => setProviderBaseUrl(e.target.value)}
                     className="text-xs px-2 py-1 border rounded bg-white w-44 focus:outline-none focus:ring-2 focus:ring-blue-300"
                     aria-label="Provider base URL"
-                  />
+                  /> */}
                 </div>
 
                 <div className="flex items-center space-x-2">
                   {isFetchingModels ? (
                     <div className="text-xs px-2 py-1 text-gray-600">Loading models...</div>
                   ) : availableModels && availableModels.length > 0 ? (
-                    <select
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value)}
-                      className="text-xs px-2 py-1 border rounded bg-white w-44 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                      aria-label="Model"
-                    >
-                      {availableModels.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
+                    <div className="relative inline-block">
+                      <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        className="font-mono text-[0.8em] appearance-none text-xs px-2 py-1 border rounded bg-white pr-6 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                        aria-label="Model"
+                      >
+                        {availableModels.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                        <svg className="w-3 h-3 text-gray-700" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+                          <path d="M6 8l4 4 4-4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
                       ) : (
                         <div className="flex items-center space-x-2">
                           <div className="text-xs px-2 py-1 text-red-600">No models available.</div>
@@ -743,13 +681,13 @@ For example 'Magazine Article' indicates that we are meant to represent this con
                         </div>
                       )}
 
-                      <button
-                        onClick={() => { console.log('Refreshing models for', provider, providerBaseUrl); fetchAvailableModels(); }}
-                        title="Refresh model list"
-                        className="text-xs px-2 py-1 bg-gray-100 border rounded hover:bg-gray-200"
-                      >
-                        Refresh
-                      </button>
+                      {/* // <button
+                      //   onClick={() => { console.log('Refreshing models for', provider, providerBaseUrl); fetchAvailableModels(); }}
+                      //   title="Refresh model list"
+                      //   className="text-xs px-2 py-1 bg-gray-100 border rounded hover:bg-gray-200"
+                      // >
+                      //   Refresh
+                      // </button> */}
                 </div>
               </div>
                   {provider === 'openai' && modelFetchError && modelFetchError.toLowerCase().includes('openai_api_key') && (
@@ -761,18 +699,9 @@ For example 'Magazine Article' indicates that we are meant to represent this con
             </div>
             
             {/* Render the appropriate editor based on selection */}
-            <EditorComponent 
-              content={generatedFiction || ""} 
-              placeholder={
-                isGenerating ? 
-                  <span className="relative">
-                    Conjuring
-                    <span className="absolute left-full">{loadingDots}</span>
-                  </span> : 
-                  "Click 'Conjure' to generate design fiction"
-              }
-              isGenerating={isGenerating}
-            />
+            <div className="h-full flex-1 min-h-0">
+              <ResponseViewer content={generatedFiction || ""} />
+            </div>
           </div>
 
           {/* Card Descriptions - only show when cards are visible */}
