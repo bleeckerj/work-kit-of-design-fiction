@@ -15,8 +15,7 @@ import {
   attributeDescriptions, 
   archetypeDescriptions, 
   objectDescriptions,
-  actionDescriptions,
-  extrasDescriptions
+  actionDescriptions
 } from '../data/cardDescriptions';
 import ResponseViewer from './ResponseViewer';
 
@@ -33,7 +32,6 @@ const ShuffleComponent = ({
   actionFrontImages,
   archetypeFrontImages,
   objectFrontImages,
-  extrasFrontImages,
   attributeBackImage,
   objectBackImage,
   actionBackImage,
@@ -45,7 +43,7 @@ const ShuffleComponent = ({
     action: getRandomImage(actionFrontImages),
     archetype: getRandomImage(archetypeFrontImages),
     object: getRandomImage(objectFrontImages),
-    extras: getRandomImage(extrasFrontImages),
+    // extras removed
   });
   
   // Track the current indices of each card
@@ -54,7 +52,7 @@ const ShuffleComponent = ({
     action: -1,
     archetype: -1,
     object: -1,
-    extras: -1
+    // extras removed
   });
   
   const [buttonStyle, setButtonStyle] = useState({
@@ -68,8 +66,7 @@ const ShuffleComponent = ({
     attribute: "",
     action: "",
     archetype: "",
-    object: "",
-    extras: ""
+    object: ""
   });
   
   const [generatedFiction, setGeneratedFiction] = useState("");
@@ -240,9 +237,6 @@ const ShuffleComponent = ({
       case 'object':
       descriptions = objectDescriptions;
       break;
-      case 'extras':
-      descriptions = extrasDescriptions;
-      break;
       default:
       return "";
     }
@@ -277,9 +271,6 @@ const ShuffleComponent = ({
       break;
       case 'object':
       descriptions = objectDescriptions;
-      break;
-      case 'extras':
-      descriptions = extrasDescriptions;
       break;
       default:
       return null;
@@ -321,9 +312,6 @@ const ShuffleComponent = ({
       case 'object':
       descriptions = objectDescriptions;
       break;
-      case 'extras':
-      descriptions = extrasDescriptions;
-      break;
       default:
       return null;
     }
@@ -359,7 +347,6 @@ const ShuffleComponent = ({
   const archetypeCardRef = useRef();
   const objectCardRef = useRef();
   const actionCardRef = useRef();
-  const extrasCardRef = useRef();
   
   // Add a state to track flipping
   const [isFlipping, setIsFlipping] = useState(false);
@@ -383,15 +370,12 @@ const ShuffleComponent = ({
       const newActionImage = getRandomImage(actionFrontImages);
       const newArchetypeImage = getRandomImage(archetypeFrontImages);
       const newObjectImage = getRandomImage(objectFrontImages);
-      const newExtrasImage = getRandomImage(extrasFrontImages);
-      
       // Set new images
       setImages({
         attribute: newAttributeImage,
         action: newActionImage,
         archetype: newArchetypeImage,
         object: newObjectImage,
-        extras: newExtrasImage,
       });
       
       // Find indices
@@ -399,15 +383,13 @@ const ShuffleComponent = ({
       const actionIndex = actionFrontImages.indexOf(newActionImage);
       const archetypeIndex = archetypeFrontImages.indexOf(newArchetypeImage);
       const objectIndex = objectFrontImages.indexOf(newObjectImage);
-      const extrasIndex = extrasFrontImages.indexOf(newExtrasImage);
-      
       // Update indices and descriptions
       setImageIndices({
         attribute: attributeIndex,
         action: actionIndex,
         archetype: archetypeIndex,
         object: objectIndex,
-        extras: extrasIndex
+        // extras removed
       });
       
       setCurrentDescriptions({
@@ -415,7 +397,7 @@ const ShuffleComponent = ({
         action: getDescriptionForType('action', actionIndex),
         archetype: getDescriptionForType('archetype', archetypeIndex),
         object: getDescriptionForType('object', objectIndex),
-        extras: getDescriptionForType('extras', extrasIndex)
+        // extras removed
       });
       
       
@@ -428,17 +410,25 @@ const ShuffleComponent = ({
   
   // Function to format prompts according to Llama 3's expected format
   const formatLlamaPrompt = (elements) => {
-    const { attributeInfo, actionInfo, archetypeInfo, objectInfo, extrasInfo } = elements;
+    const { attributeInfo, actionInfo, archetypeInfo, objectInfo } = elements;
     
     
-    // Use a JS-safe template string: avoid embedding raw backtick characters (```) which would terminate
-    // the surrounding template literal. Spell out sequences instead of using literal backticks.
-    return `<|system|>
-You are a creative design fiction generator who helps designers imagine speculative near-future products and services. Produce a plausible and thought-provoking scenario that integrates the provided elements.
+  // Use a JS-safe template string: avoid embedding raw backtick characters which would terminate
+  // the surrounding template literal.
+  return `<|system|>
+You are a creative design-fiction generator. Produce exactly one JSON object and nothing else. The object should describe a small speculative artifact created by combining the provided cards.
 
-Do not mention a specific year. Focus on social, cultural, and design implications rather than speculative technical hype. Avoid first-person narration.
+Lead sentence requirement:
+Include a short lead sentence that follows this pattern (fill the slots):
+"I saw a <ARCHETYPE>. It seemed to be for an <OBJECT> that does <ACTION> while it also <ATTRIBUTE>."
+Replace the angle-bracketed tokens with the corresponding card values and adjust articles ("a" vs "an") so the sentence reads naturally. This exact sentence should appear verbatim (with replaced values) as the opening line of the artifact description or as the first sentence of the scenario.
 
-Context:
+Guidance:
+- Treat ARCHETYPE as the presentation form (e.g., receipt, magazine blurb, product label, patch description). Use that form for the artifact text and formatting cues.
+- Ensure the artifact makes clear how the OBJECT performs the ACTION and how the ATTRIBUTE is a salient quality of that object.
+- Be concise, plausible, evocative. Prefer social/design implications over technical speculation. Avoid first-person reflection beyond the lead sentence.
+
+Context (fill these using the provided values):
 ARCHETYPE: ${archetypeInfo.name}
 ARCHETYPE_DESCRIPTION: ${archetypeInfo.description}
 
@@ -451,15 +441,24 @@ OBJECT_DESCRIPTION: ${objectInfo.description}
 ACTION: ${actionInfo.name}
 ACTION_DESCRIPTION: ${actionInfo.description}
 
-OUTCOME: ${extrasInfo.name}
-OUTCOME_DESCRIPTION: ${extrasInfo.description}
+Formatting and required output:
+- Respond with exactly one JSON object and nothing else. Do NOT include any explanatory text.
+- Do NOT wrap the JSON in Markdown fences or backticks.
+- If a field cannot be supplied, include it with an empty string value.
 
-IMPORTANT: Respond with a single JSON object only. Do not include any explanatory text before or after the JSON. Do not wrap the JSON in Markdown code fences or literal backtick characters; if you need to mention the sequence of three backticks, write it as the words "three backticks" or "triple backtick". The JSON must be valid for strict JSON.parse.
+Required JSON schema (return all fields):
+{
+  "elements": { "ATTRIBUTE": "", "OBJECT": "", "ACTION": "", "ARCHETYPE": "" },
+  "artifact": { "title": "", "description": "" },
+  "design": { "artifact_description": "" },
+  "implications": { "social": "", "cultural": "", "ethical": "" },
+  "scenario": { "narrative": "" },
+  "additional": { "meta_commentary": "", "reasoning": "", "trends": "" }
+}
 
-Return the following JSON schema fields (use empty string for missing values):
-elements (ATTRIBUTE, OBJECT, ACTION, ARCHETYPE, OUTCOME), artifact (title, description), design (artifact_description), implications (social, cultural, ethical), scenario (narrative), additional (meta_commentary, reasoning, trends).
+Use the ARCHETYPE as the presentation form for the Artifact (for example: a receipt, a product label, a short ad, a magazine blurb, a patch description, etc.). Make the artifact and scenario readable in that form.
 
-Now produce the JSON object that conforms to the schema.`;
+Now produce the JSON object that conforms to the schema above.`;
   };
   
   // Updated generateAIPrompt function
@@ -481,10 +480,9 @@ Now produce the JSON object that conforms to the schema.`;
     const actionInfo = getFullCardInfoForType('action', imageIndices.action);
     const archetypeInfo = getFullCardInfoForType('archetype', imageIndices.archetype);
     const objectInfo = getFullCardInfoForType('object', imageIndices.object);
-    const extrasInfo = getFullCardInfoForType('extras', imageIndices.extras);
     
-    // Format the prompt according to the model's requirements
-    const elements = { attributeInfo, actionInfo, archetypeInfo, objectInfo, extrasInfo };
+  // Format the prompt according to the model's requirements
+  const elements = { attributeInfo, actionInfo, archetypeInfo, objectInfo };
     const prompt = formatLlamaPrompt(elements);
     
     try {
@@ -514,8 +512,7 @@ Now produce the JSON object that conforms to the schema.`;
   imageIndices.attribute !== -1 && 
   imageIndices.action !== -1 && 
   imageIndices.archetype !== -1 && 
-  imageIndices.object !== -1 && 
-  imageIndices.extras !== -1;
+  imageIndices.object !== -1;
 
   // EditorType removed — always show rich editor
   
@@ -573,18 +570,7 @@ Now produce the JSON object that conforms to the schema.`;
             </div>
           </div>
 
-          {/* Fifth card - reduce margin */}
-          <div className="flex justify-center mb-4">
-            <div className="card-wrapper">
-              <CardFlipper
-                frontImage={images.extras}
-                backImage={extrasBackImage}
-                allImages={extrasFrontImages}
-                onImageChange={(index, isFlipped) => handleImageChange('extras', index, isFlipped)}
-                client:load
-              />
-            </div>
-          </div>
+          {/* extras/outcome card removed */}
         </div>
 
         {/* Right column: Editor - touch right edge */}
@@ -734,12 +720,7 @@ Now produce the JSON object that conforms to the schema.`;
                   <p className="text-xs italic ml-2">{getFullCardInfoForType('object', imageIndices.object)?.description}</p>
                 </div>
               )}
-              {imageIndices.extras !== -1 && (
-                <div className="mb-1">
-                  <p className="font-semibold">Outcome: {getFullCardInfoForType('extras', imageIndices.extras)?.name}</p>
-                  <p className="text-xs italic ml-2">{getFullCardInfoForType('extras', imageIndices.extras)?.description}</p>
-                </div>
-              )}
+              {/* extras/outcome removed from descriptions */}
             </div>
           )}
         </div>
@@ -748,8 +729,8 @@ Now produce the JSON object that conforms to the schema.`;
       {/* Status indicator - reduce margin and padding */}
       <div className="mt-2 p-2 border-[0.5px] border-black bg-white w-full">
         {allCardsVisible ? (
-          <div className="bg-gray-200 p-1 rounded-md text-xs font-mono">
-            A {currentDescriptions.attribute}{" "}{currentDescriptions.object}{" "}that{" "}{currentDescriptions.action}{" "}like a{" "}{currentDescriptions.archetype}{" "}with{" "}{currentDescriptions.extras}{" "}characteristics.
+            <div className="bg-gray-200 p-1 rounded-md text-xs font-mono">
+            A {currentDescriptions.attribute}{" "}{currentDescriptions.object}{" "}that{" "}{currentDescriptions.action}{" "}like a{" "}{currentDescriptions.archetype}{" "}characteristics.
           </div>
         ) : (
           <div className="w-full text-center text-sm">Flip cards to reveal design fiction prompt.</div>
