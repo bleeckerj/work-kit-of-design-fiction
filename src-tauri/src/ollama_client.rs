@@ -40,7 +40,7 @@ pub async fn generate_text(prompt: String, model: Option<String>) -> Result<Stri
         }),
     };
 
-    let response = client.post("localhost:11434/api/generate")
+    let response = client.post("http://localhost:11434/api/generate")
         .json(&request)
         .send()
         .await?;

@@ -19,7 +19,7 @@ import {
   extrasDescriptions
 } from '../data/cardDescriptions';
 import EditorComponent from './EditorComponent';
-import JSONEditorComponent from './JSONEditorComponent';
+// JSON editor removed — always use rich EditorComponent
 
 const getRandomImage = (images) => {
   if (!images || images.length === 0) {
@@ -75,7 +75,13 @@ const ShuffleComponent = ({
   
   const [generatedFiction, setGeneratedFiction] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("llama3.2:latest");
+  // provider/model selection (persisted to localStorage)
+  const [provider, setProvider] = useState(() => localStorage.getItem('llm_provider') || 'ollama');
+  const [providerBaseUrl, setProviderBaseUrl] = useState(() => localStorage.getItem('llm_base_url') || '');
+  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('llm_model') || 'gpt-4o-mini');
+  const [availableModels, setAvailableModels] = useState(null); // null = unknown / not provided by backend
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
+  const [modelFetchError, setModelFetchError] = useState(null);
   
   // Add this state and effect for animating the loading dots
   const [loadingDots, setLoadingDots] = useState('');
@@ -101,6 +107,60 @@ const ShuffleComponent = ({
       if (dotsInterval) clearInterval(dotsInterval);
     };
   }, [isGenerating]);
+
+  // persist provider/model/base_url to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('llm_provider', provider);
+      localStorage.setItem('llm_base_url', providerBaseUrl);
+      localStorage.setItem('llm_model', selectedModel);
+    } catch (e) {
+      // ignore quota errors in some environments
+    }
+  }, [provider, providerBaseUrl, selectedModel]);
+
+  // Fetch available models from the backend for the selected provider/base_url
+  const fetchAvailableModels = async (prov = provider, base = providerBaseUrl) => {
+    setIsFetchingModels(true);
+    try {
+      // Backend command 'list_models' is optional; gracefully handle failure
+      // Tauri command functions expect the args under an `args` key (we use the same shape as generate_design_fiction)
+      const res = await invoke('list_models', { args: { provider: prov, base_url: base } });
+      let models = null;
+      if (Array.isArray(res)) models = res;
+      else if (res && Array.isArray(res.models)) models = res.models;
+
+      if (models && models.length > 0) {
+        setAvailableModels(models);
+        setModelFetchError(null);
+        // If current selectedModel isn't in list, adopt the first available model
+        if (!models.includes(selectedModel)) {
+          setSelectedModel(models[0]);
+        }
+      } else {
+        setAvailableModels(null);
+        setModelFetchError('No models returned by provider');
+      }
+    } catch (err) {
+      // Provide clearer logging for troubleshooting (missing API key, invalid base URL, wrong args shape, etc.)
+      console.warn('Could not fetch models from backend:', err);
+      setAvailableModels(null);
+      try {
+        const msg = err && err.toString ? err.toString() : JSON.stringify(err);
+        setModelFetchError(msg);
+      } catch (e) {
+        setModelFetchError('Unknown error fetching models');
+      }
+    } finally {
+      setIsFetchingModels(false);
+    }
+  };
+
+  useEffect(() => {
+    // Try to fetch models when provider or base URL changes
+    fetchAvailableModels(provider, providerBaseUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider, providerBaseUrl]);
   
   const handleMouseDown = () => {
     setButtonStyle({
@@ -484,7 +544,12 @@ For example 'Magazine Article' indicates that we are meant to represent this con
       alert("Please flip all cards to generate a design fiction");
       return;
     }
-    
+    // Require a model selected from the backend-provided list
+    if (!(Array.isArray(availableModels) && availableModels.length > 0 && selectedModel)) {
+      alert('No available model selected. Please refresh the model list or set a valid provider/base URL.');
+      return;
+    }
+
     setIsGenerating(true);
     
     // Get the full info for all visible cards
@@ -504,7 +569,9 @@ For example 'Magazine Article' indicates that we are meant to represent this con
       const result = await invoke('generate_design_fiction', {
         args: {
           prompt: prompt,
-          model: selectedModel
+          model: selectedModel,
+          provider: provider,
+          base_url: providerBaseUrl
         }
       });
       
@@ -526,8 +593,7 @@ For example 'Magazine Article' indicates that we are meant to represent this con
   imageIndices.object !== -1 && 
   imageIndices.extras !== -1;
 
-  // Add this state near your other state variables
-  const [editorType, setEditorType] = useState('rich'); // 'rich' or 'json'
+  // EditorType removed — always show rich editor
   
   return (
     // Update the outer container to remove padding and margins
@@ -610,7 +676,7 @@ For example 'Magazine Article' indicates that we are meant to represent this con
               <button 
                 className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300 text-sm w-32"
                 onClick={generateAIPrompt}
-                disabled={isGenerating}
+                disabled={isGenerating || !(Array.isArray(availableModels) && availableModels.length > 0 && selectedModel)}
               >
                 <span className="inline-block text-center relative">
                   {isGenerating ? (
@@ -628,63 +694,85 @@ For example 'Magazine Article' indicates that we are meant to represent this con
             </div>
           )}
 
-                <button 
-                  type="button"
-                  onClick={() => setEditorType('rich')}
-                  className={`px-2 py-1 text-xs font-medium rounded-l-lg ${
-                    editorType === 'rich' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  Rich Text
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setEditorType('json')}
-                  className={`px-2 py-1 text-xs font-medium rounded-r-lg ${
-                    editorType === 'json' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  JSON
-                </button>
+              {/* Provider / Model controls */}
+              <div className="ml-2 flex items-center space-x-2">
+                <div className="flex items-center space-x-2">
+                  <label htmlFor="provider" className="sr-only">Provider</label>
+                  <select
+                    id="provider"
+                    value={provider}
+                    onChange={(e) => setProvider(e.target.value)}
+                    className="text-xs px-2 py-1 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    aria-label="LLM provider"
+                  >
+                    <option value="ollama">Ollama (local)</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="lmstudio">LMStudio</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    placeholder="Base URL (optional)"
+                    value={providerBaseUrl}
+                    onChange={(e) => setProviderBaseUrl(e.target.value)}
+                    className="text-xs px-2 py-1 border rounded bg-white w-44 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    aria-label="Provider base URL"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {isFetchingModels ? (
+                    <div className="text-xs px-2 py-1 text-gray-600">Loading models...</div>
+                  ) : availableModels && availableModels.length > 0 ? (
+                    <select
+                      value={selectedModel}
+                      onChange={(e) => setSelectedModel(e.target.value)}
+                      className="text-xs px-2 py-1 border rounded bg-white w-44 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      aria-label="Model"
+                    >
+                      {availableModels.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <div className="text-xs px-2 py-1 text-red-600">No models available.</div>
+                          {modelFetchError && (
+                            <div className="text-xs px-2 py-1 text-gray-600">{modelFetchError}</div>
+                          )}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => { console.log('Refreshing models for', provider, providerBaseUrl); fetchAvailableModels(); }}
+                        title="Refresh model list"
+                        className="text-xs px-2 py-1 bg-gray-100 border rounded hover:bg-gray-200"
+                      >
+                        Refresh
+                      </button>
+                </div>
+              </div>
+                  {provider === 'openai' && modelFetchError && modelFetchError.toLowerCase().includes('openai_api_key') && (
+                    <div className="mt-1 text-xs text-yellow-700">OpenAI requires an API key set in `src-tauri/.env` (OPENAI_API_KEY). See `.env.example`.</div>
+                  )}
+
+                {/* Editor toggle removed to save space; rich editor is always shown */}
               </div>
             </div>
             
             {/* Render the appropriate editor based on selection */}
-            {editorType === 'rich' ? (
-              <EditorComponent 
-                content={generatedFiction || ""} 
-                placeholder={
-                  isGenerating ? 
-                    <span className="relative">
-                      Conjuring
-                      <span className="absolute left-full">{loadingDots}</span>
-                    </span> : 
-                    "Click 'Conjure' to generate design fiction"
-                }
-                isGenerating={isGenerating}
-              />
-            ) : (
-              <JSONEditorComponent 
-                content={generatedFiction || ""} 
-                placeholder={
-                  isGenerating ? 
-                    <span className="relative">
-                      Conjuring
-                      <span className="absolute left-full">{loadingDots}</span>
-                    </span> : 
-                    "Click 'Conjure' to generate design fiction"
-                }
-                isGenerating={isGenerating}
-                onChange={(jsonString) => {
-                  // Optionally handle changes to the JSON
-                  // setGeneratedFiction(jsonString);
-                }}
-              />
-            )}
+            <EditorComponent 
+              content={generatedFiction || ""} 
+              placeholder={
+                isGenerating ? 
+                  <span className="relative">
+                    Conjuring
+                    <span className="absolute left-full">{loadingDots}</span>
+                  </span> : 
+                  "Click 'Conjure' to generate design fiction"
+              }
+              isGenerating={isGenerating}
+            />
           </div>
 
           {/* Card Descriptions - only show when cards are visible */}
