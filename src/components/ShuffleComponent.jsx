@@ -573,7 +573,38 @@ Now produce the JSON object that conforms to the schema above.`;
             </div>
           </div>
 
-          {/* extras/outcome card removed */}
+          {/* Card Descriptions - only show when cards are visible */}
+          {allCardsVisible && (
+            <div className="mt-2 p-3 border border-gray-200 rounded bg-gray-50 text-xs">
+              <h3 className="font-bold mb-1">Card Descriptions:</h3>
+              {/* Descriptions - make more compact */}
+              {imageIndices.attribute !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Attribute: {getFullCardInfoForType('attribute', imageIndices.attribute)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('attribute', imageIndices.attribute)?.description}</p>
+                </div>
+              )}
+              {imageIndices.action !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Action: {getFullCardInfoForType('action', imageIndices.action)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('action', imageIndices.action)?.description}</p>
+                </div>
+              )}
+              {imageIndices.archetype !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Archetype: {getFullCardInfoForType('archetype', imageIndices.archetype)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('archetype', imageIndices.archetype)?.description}</p>
+                </div>
+              )}
+              {imageIndices.object !== -1 && (
+                <div className="mb-1">
+                  <p className="font-semibold">Object: {getFullCardInfoForType('object', imageIndices.object)?.name}</p>
+                  <p className="text-xs italic ml-2">{getFullCardInfoForType('object', imageIndices.object)?.description}</p>
+                </div>
+              )}
+              {/* extras/outcome removed from descriptions */}
+            </div>
+          )}
         </div>
 
         {/* Right column: Editor - touch right edge */}
@@ -693,39 +724,6 @@ Now produce the JSON object that conforms to the schema above.`;
             </div>
           </div>
 
-          {/* Card Descriptions - only show when cards are visible */}
-          {allCardsVisible && (
-            <div className="mt-2 p-3 border border-gray-200 rounded bg-gray-50 text-xs">
-              <h3 className="font-bold mb-1">Card Descriptions:</h3>
-              
-              {/* Descriptions - make more compact */}
-              {imageIndices.attribute !== -1 && (
-                <div className="mb-1">
-                  <p className="font-semibold">Attribute: {getFullCardInfoForType('attribute', imageIndices.attribute)?.name}</p>
-                  <p className="text-xs italic ml-2">{getFullCardInfoForType('attribute', imageIndices.attribute)?.description}</p>
-                </div>
-              )}
-              {imageIndices.action !== -1 && (
-                <div className="mb-1">
-                  <p className="font-semibold">Action: {getFullCardInfoForType('action', imageIndices.action)?.name}</p>
-                  <p className="text-xs italic ml-2">{getFullCardInfoForType('action', imageIndices.action)?.description}</p>
-                </div>
-              )}
-              {imageIndices.archetype !== -1 && (
-                <div className="mb-1">
-                  <p className="font-semibold">Archetype: {getFullCardInfoForType('archetype', imageIndices.archetype)?.name}</p>
-                  <p className="text-xs italic ml-2">{getFullCardInfoForType('archetype', imageIndices.archetype)?.description}</p>
-                </div>
-              )}
-              {imageIndices.object !== -1 && (
-                <div className="mb-1">
-                  <p className="font-semibold">Object: {getFullCardInfoForType('object', imageIndices.object)?.name}</p>
-                  <p className="text-xs italic ml-2">{getFullCardInfoForType('object', imageIndices.object)?.description}</p>
-                </div>
-              )}
-              {/* extras/outcome removed from descriptions */}
-            </div>
-          )}
         </div>
       </div>
       
